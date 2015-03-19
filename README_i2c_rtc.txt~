@@ -1,0 +1,20 @@
+i2c_rtc is an application which reads and shows the system time and date.
+ 
+
+Chip used:
+M41T0 serial RTC present on the Evaluation Board 3.1
+
+Compiling the application:
+In the application directory, run make command preceding machine(module) name.
+e.g: MACHINE=colibri-t20 make
+Copy the exe to the module either through ethernet and USB.
+Ethernet:
+scp i2c_rtc root@10.18.0.162:/home/root
+USB:
+cp i2c_rtc /media/USB
+
+Run the application:
+./i2c_rtc
+
+Output:
+Output should show the system date and time. 

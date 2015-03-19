@@ -1,0 +1,82 @@
+
+#include <errno.h>                  
+#include <fcntl.h>                  
+
+
+#include <stdio.h>
+#include <string.h>                 
+#include <sys/ioctl.h>              
+#include <unistd.h>                 
+#include <stdint.h>
+#include <linux/types.h>
+
+#include "i2c-dev.h"
+#include "i2c_sample.h"
+
+#define BUS_NUM 0
+#define SLAVE_ADD 0x68
+
+//******************************************************************************
+int main(int argc, char **argv)
+{
+       	int fd;
+    	char path[15];
+    	int rtcRead;
+	int retVal;
+	int rtcTime[4];
+	char *rtcDay[8] = {"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"};
+	int rtcDate[4];
+    	
+
+
+	retVal = snprintf(path, 11, "/dev/i2c-%d", BUS_NUM);
+    	printf("%s\n", path);                                       
+    	fd = open(path, O_RDWR);                                    
+    	if(errno)                                                   
+        	printf("%s at open()\n", strerror(errno));
+
+	
+    	ioctl(fd, I2C_SLAVE_FORCE, SLAVE_ADD);                         
+    	if(errno)                                                   
+        	printf("%s at ioctl()\n", strerror(errno));
+
+	
+	rtcTime[0] = i2c_smbus_read_byte_data(fd, 0x00);         
+	rtcTime[1] = i2c_smbus_read_byte_data(fd, 0x01); 
+	rtcTime[2] = i2c_smbus_read_byte_data(fd, 0x02); 
+	rtcTime[3] = i2c_smbus_read_byte_data(fd, 0x03); 
+	rtcDate[0] = i2c_smbus_read_byte_data(fd, 0x04); 
+	rtcDate[1] = i2c_smbus_read_byte_data(fd, 0x05); 
+	rtcDate[2] = i2c_smbus_read_byte_data(fd, 0x06); 
+	
+
+	if (rtcTime[0] < 0 || rtcTime[0] > 59 )
+		printf("Invalid data(Seconds) %X: %d\n", rtcTime[0], rtcTime[0]);
+	if (rtcTime[1] < 0 || rtcTime[1] > 59 ) 
+		printf("Invalid data(Minutes) %X: %d \n", rtcTime[1], rtcTime[1]);
+	if (rtcTime[2] < 0 || rtcTime[2] > 12 )
+		printf("Invalid data(Hours) %X:%d \n", rtcTime[2], rtcTime[2]);
+	if (rtcTime[3] < 1 || rtcTime[3] > 7 )
+		printf("Invalid data(Day) %X:%d \n", rtcTime[3], rtcTime[3]);
+	if (rtcDate[0] < 1 || rtcDate[0] > 31 ) 
+		printf("Invalid data(Date) %X: %d\n", rtcDate[0], rtcDate[0]);
+	if (rtcDate[1] < 1 || rtcDate[1] > 12 ) 
+		printf("Invalid data(Month) %X:%d \n", rtcDate[1], rtcDate[1]);
+	if (rtcDate[2] < 0 || rtcDate[1] > 99 ) 
+		printf("Invalid data(Year) %X:%d \n", rtcDate[2], rtcDate[2]);
+
+
+	printf("Time is HH:MM:SS %X:%X:%X\n", rtcTime[2],rtcTime[1],rtcTime[0]);
+	printf("Day is %s\n", rtcDay[rtcTime[3] - 1]);  
+	printf("Date is DD/MM/YY %X:%X:%X\n", rtcDate[0],rtcDate[1],rtcDate[2]);
+	
+	usleep(10000);
+
+	if((rtcTime == 0) || (rtcDate == 0))                                
+        	printf("Problem at read_byte_data, returned 0\n");
+   	else                                                       
+        	printf("success\n");
+	
+
+    return 0;
+}
